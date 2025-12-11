@@ -36,7 +36,7 @@ export interface PdfFieldConfig {
   isGlobal?: boolean; 
   maxWidth?: number; 
   
-  // Para borrar lo que hay debajo
+  // Para borrar lo que hay debajo (Legacy/Optional now)
   boxWidth?: number;  
   boxHeight?: number; 
 }
@@ -65,7 +65,8 @@ export interface CityTemplateConfig {
   formStructure: FormSection[];
 
   // Configuración TÉCNICA del PDF (Dónde pintar cada campo)
+  // Ahora soporta array para repetir campos (ej: teléfonos)
   pdfMapping: {
-    [key in keyof CCCFormData]?: PdfFieldConfig;
+    [key in keyof CCCFormData]?: PdfFieldConfig | PdfFieldConfig[];
   };
 }

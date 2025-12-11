@@ -1,5 +1,5 @@
 import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont } from 'pdf-lib';
-import { CCCFormData, CityTemplateConfig } from '../types';
+import { CCCFormData, CityTemplateConfig, PdfFieldConfig } from '../types';
 
 /**
  * CONFIGURACIÓN MAESTRA DE PLANTILLAS Y FORMULARIOS
@@ -43,69 +43,50 @@ export const CITY_TEMPLATES: Record<string, CityTemplateConfig> = {
       }
     ],
 
-    // 2. MAPEO DEL PDF (Coordenadas ajustadas para coincidir con la imagen)
+    // 2. MAPEO DEL PDF (Coordenadas para ESCRIBIR texto)
     pdfMapping: {
       // --- ENCABEZADOS SUPERIORES ---
-      fecha: { 
-        x: 460, y: 718, isGlobal: true, 
-        boxWidth: 140, boxHeight: 14 
-      }, 
-      recibo: { 
-        x: 380, y: 708, isGlobal: true,
-        boxWidth: 200, boxHeight: 14
-      },
-      codigoVerificacion: { 
-        x: 420, y: 696, isGlobal: true,
-        boxWidth: 150, boxHeight: 14
-      },
+      fecha: { x: 480, y: 700, size: 9 }, 
+      recibo: { x: 380, y: 680, size: 9 },
+      codigoVerificacion: { x: 420, y: 668, size: 9 },
 
       // --- SECCIÓN 1: NOMBRE, IDENTIFICACIÓN Y DOMICILIO ---
-      razonSocial: { 
-        x: 215, y: 525, page: 0,
-        boxWidth: 380, boxHeight: 14 
-      },
-      
-      nit: { 
-        x: 215, y: 513, page: 0,
-        boxWidth: 150, boxHeight: 12
-      },
-      
-      ciudad: { 
-        x: 215, y: 501, page: 0,
-        boxWidth: 150, boxHeight: 12
-      },
+      razonSocial: { x: 215, y: 492, size: 9, font: 'Helvetica-Bold' },
+      nit: { x: 215, y: 480, size: 9 },
+      ciudad: { x: 215, y: 468, size: 9 }, // Domicilio principal (Ciudad)
 
       // --- SECCIÓN 2: MATRÍCULA ---
-      matricula: { 
-        x: 215, y: 460, page: 0,
-        boxWidth: 100, boxHeight: 12
-      },
+      matricula: { x: 215, y: 424, size: 9 },
+      grupoNiif: { x: 215, y: 400, size: 9 },
       
-      grupoNiif: { 
-        x: 215, y: 436, page: 0,
-        boxWidth: 150, boxHeight: 12
-      },
+      // --- SECCIÓN 3: UBICACIÓN COMERCIAL ---
+      // Se repite en Notificación Judicial
+      domicilio: [
+        { x: 215, y: 357, size: 9 }, // Comercial
+        { x: 215, y: 265, size: 9 }  // Judicial
+      ],
       
-      // --- SECCIÓN 3: UBICACIÓN ---
-      domicilio: { 
-        x: 215, y: 395, page: 0,
-        boxWidth: 350, boxHeight: 12
-      },
-      
-      departamento: {
-         x: 215, y: 383, page: 0, 
-         boxWidth: 150, boxHeight: 12
-      },
+      departamento: [
+        { x: 215, y: 345, size: 9 }, // Municipio Comercial (usamos campo departamento para VALLE)
+        { x: 215, y: 253, size: 9 }  // Municipio Judicial
+      ],
        
-      correo: {
-        x: 215, y: 371, page: 0,
-        boxWidth: 350, boxHeight: 12
-      },
+      correo: [
+        { x: 215, y: 333, size: 9 }, // Comercial
+        { x: 215, y: 241, size: 9 }  // Judicial
+      ],
       
-      telefono: {
-        x: 215, y: 359, page: 0,
-        boxWidth: 150, boxHeight: 12
-      }
+      // TELÉFONOS (Repetidos 3 veces en comercial, 3 veces en judicial = 6 total)
+      telefono: [
+        // Comercial
+        { x: 215, y: 321, size: 9 }, 
+        { x: 215, y: 309, size: 9 },
+        { x: 215, y: 297, size: 9 },
+        // Judicial
+        { x: 215, y: 229, size: 9 },
+        { x: 215, y: 217, size: 9 },
+        { x: 215, y: 205, size: 9 }
+      ]
     }
   },
   
@@ -147,37 +128,60 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
         throw new Error("Falta templatePath.");
     }
     
+    // Cargar fuentes
+    const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const courier = await pdfDoc.embedFont(StandardFonts.Courier);
+
     const pages = pdfDoc.getPages();
 
-    // --- SOLO DIBUJAR PARCHES DE DEBUG (ROJO SEMITRANSPARENTE) ---
+    // Función auxiliar para dibujar texto
+    const drawField = (text: string, cfg: PdfFieldConfig) => {
+        let font = helvetica;
+        if (cfg.font === 'Helvetica-Bold') font = helveticaBold;
+        if (cfg.font === 'Courier') font = courier;
+
+        // Seleccionar página
+        const pageIndex = cfg.page || 0;
+        if (pageIndex >= pages.length) return;
+        const page = pages[pageIndex];
+
+        // Dibujar texto
+        page.drawText(text, {
+            x: cfg.x,
+            y: cfg.y,
+            size: cfg.size || 10,
+            font: font,
+            color: rgb(0, 0, 0),
+        });
+
+        // Debug visual (opcional)
+        if (debugMode) {
+             page.drawRectangle({
+                x: cfg.x - 2,
+                y: cfg.y - 2,
+                width: (cfg.size || 10) * text.length * 0.6, // Estimación ancho
+                height: (cfg.size || 10) + 4,
+                borderColor: rgb(1, 0, 0),
+                borderWidth: 1,
+                opacity: 0.3,
+                color: undefined
+             });
+        }
+    };
+
+    // Iterar sobre el mapeo y dibujar
     Object.keys(config.pdfMapping).forEach((keyStr) => {
       const key = keyStr as keyof CCCFormData;
-      const fieldConfig = config.pdfMapping[key];
-      
-      if (fieldConfig) {
-        let targetPages: PDFPage[] = [];
-        
-        if (fieldConfig.isGlobal) {
-            targetPages = pages;
-        } else if (fieldConfig.page !== undefined && pages[fieldConfig.page]) {
-            targetPages = [pages[fieldConfig.page]];
-        }
+      const mapping = config.pdfMapping[key];
+      const value = data[key];
 
-        targetPages.forEach(p => {
-             // DIBUJAR RECUADRO ROJO TRANSPARENTE
-             if (fieldConfig.boxWidth && fieldConfig.boxHeight) {
-                p.drawRectangle({
-                    x: fieldConfig.x - 2, 
-                    y: fieldConfig.y - 4,
-                    width: fieldConfig.boxWidth,
-                    height: fieldConfig.boxHeight + 4,
-                    color: rgb(1, 0, 0), // ROJO PARA DEPURAR
-                    opacity: 0.5, // SEMI TRANSPARENTE PARA VER ABAJO
-                    borderColor: rgb(1, 0, 0),
-                    borderWidth: 1
-                });
-             }
-        });
+      if (mapping && value) {
+        if (Array.isArray(mapping)) {
+            mapping.forEach(cfg => drawField(value, cfg));
+        } else {
+            drawField(value, mapping);
+        }
       }
     });
 
@@ -186,7 +190,7 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `DEBUG_ROJO_${data.ciudad}.pdf`;
+    link.download = `CERTIFICADO_${data.ciudad}_${data.nit}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
