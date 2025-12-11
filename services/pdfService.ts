@@ -6,49 +6,82 @@ import { CCCFormData, CityTemplateConfig } from '../types';
  */
 export const CITY_TEMPLATES: Record<string, CityTemplateConfig> = {
   'CALI': {
-    // AHORA USAMOS EL PDF DIRECTO. 
-    // Asegúrate de guardar el archivo en public/templates/plantilla_cali.pdf
     templatePath: '/templates/plantilla_cali.pdf',
     
     fields: {
-      // --- ENCABEZADOS (Ajustados visualmente a tu captura) ---
-      // Fecha arriba derecha. "Fecha expedición: // 01:10:43 pm"
-      fecha: { x: 370, y: 708, size: 9, isGlobal: true }, 
+      // --- ENCABEZADOS GLOBAL (Tapan la fecha y códigos viejos) ---
       
-      // Recibo centrado arriba. "Recibo No. XXXXX"
-      recibo: { x: 280, y: 685, size: 10, font: 'Courier', isGlobal: true },
+      // Fecha: Está arriba a la derecha. Tapamos "// 01:10:43 pm"
+      fecha: { 
+        x: 380, y: 708, size: 9, isGlobal: true,
+        boxWidth: 150, boxHeight: 12 
+      }, 
       
-      // Código verificación debajo de recibo. "0822PPZZJ6"
-      codigoVerificacion: { x: 350, y: 672, size: 10, font: 'Helvetica-Bold', isGlobal: true },
+      // Recibo: Centro arriba. Tapamos "570875, Valor: $0" (o lo que haya)
+      recibo: { 
+        x: 280, y: 685, size: 10, font: 'Courier', isGlobal: true,
+        boxWidth: 200, boxHeight: 15
+      },
+      
+      // Código verificación: Debajo del recibo. Tapamos "0822PPZZJ6"
+      codigoVerificacion: { 
+        x: 350, y: 672, size: 10, font: 'Helvetica-Bold', isGlobal: true,
+        boxWidth: 150, boxHeight: 12
+      },
 
-      // --- PAGINA 1: DATOS EMPRESA ---
-      // Razón social (Nombre, Identificación y Domicilio)
-      razonSocial: { x: 200, y: 562, size: 9, font: 'Helvetica-Bold', page: 0 },
+      // --- PAGINA 1: DATOS EMPRESA (Tapan INVERSIONES LA OCCIDENTAL...) ---
       
-      // NIT debajo
-      nit: { x: 200, y: 548, size: 9, page: 0 },
+      // Razón social: Tapamos "INVERSIONES LA OCCIDENTAL CALI LTDA..."
+      razonSocial: { 
+        x: 200, y: 562, size: 9, font: 'Helvetica-Bold', page: 0,
+        boxWidth: 350, boxHeight: 25 // Caja alta por si tiene 2 líneas
+      },
       
-      // Domicilio principal (ciudad)
-      ciudad: { x: 200, y: 535, size: 9, page: 0 },
+      // NIT: Tapamos "8903048824"
+      nit: { 
+        x: 200, y: 548, size: 9, page: 0,
+        boxWidth: 100, boxHeight: 12
+      },
+      
+      // Domicilio principal: Tapamos "CALI"
+      ciudad: { 
+        x: 200, y: 535, size: 9, page: 0,
+        boxWidth: 100, boxHeight: 12
+      },
 
-      // Matrícula (Columna derecha, bloque Matrícula)
-      matricula: { x: 420, y: 505, size: 9, page: 0 },
+      // --- COLUMNA DERECHA ---
       
-      // Grupo NIIF (Debajo de matrícula)
-      grupoNiif: { x: 420, y: 478, size: 9, page: 0 },
+      // Matrícula: Tapamos "264544"
+      matricula: { 
+        x: 420, y: 505, size: 9, page: 0,
+        boxWidth: 100, boxHeight: 12
+      },
       
-      // Ubicación (Sección inferior)
-      domicilio: { x: 420, y: 410, size: 9, page: 0 },
+      // Grupo NIIF: Tapamos "Grupo 3"
+      grupoNiif: { 
+        x: 420, y: 478, size: 9, page: 0,
+        boxWidth: 100, boxHeight: 12
+      },
       
-      // --- PAGINA DE FIRMA (Ajustar según tu PDF, asumo pag 2 o ultima) ---
-      // Si tu PDF ya tiene la firma como imagen, no necesitas poner nada aquí.
-      // Si necesitas poner el nombre del rep legal:
-      representante: { x: 100, y: 200, size: 9, page: 1 }, // Pagina 2 (index 1)
-      cedulaRep: { x: 100, y: 190, size: 9, page: 1 }
+      // Ubicación (Sección inferior) - Tapamos "AVENIDA 5 A..."
+      domicilio: { 
+        x: 420, y: 410, size: 9, page: 0,
+        boxWidth: 150, boxHeight: 12
+      },
+      
+      // --- PAGINA DE FIRMA (Pagina 2 o ultima según tu PDF) ---
+      // Si quieres tapar el nombre del representante antiguo abajo a la derecha o izquierda
+      representante: { 
+        x: 100, y: 150, size: 9, page: 1, // Página 2
+        boxWidth: 200, boxHeight: 20
+      },
+      cedulaRep: { 
+        x: 100, y: 140, size: 9, page: 1, // Página 2
+        boxWidth: 100, boxHeight: 12
+      }
     }
   },
   'BOGOTA': {
-    // Ejemplo híbrido: Si no hay PDF, usa imágenes
     images: ['/templates/BOG1.jpg'], 
     fields: {
       fecha: { x: 400, y: 750, size: 10, isGlobal: true },
@@ -78,28 +111,23 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
   try {
     let pdfDoc: PDFDocument;
 
-    // --- ESTRATEGIA 1: CARGAR PDF PLANTILLA (MEJOR CALIDAD) ---
+    // --- CARGAR PDF O IMÁGENES ---
     if (config.templatePath) {
         const fullUrl = getAssetUrl(config.templatePath);
         const existingPdfBytes = await fetch(fullUrl).then(res => {
             if (!res.ok) throw new Error(`No se encontró el PDF plantilla en: ${fullUrl}`);
             return res.arrayBuffer();
         });
-        // Cargamos el PDF existente
         pdfDoc = await PDFDocument.load(existingPdfBytes);
-    } 
-    // --- ESTRATEGIA 2: CARGAR IMÁGENES (LEGADO) ---
-    else if (config.images && config.images.length > 0) {
+    } else if (config.images && config.images.length > 0) {
         pdfDoc = await PDFDocument.create();
         for (let i = 0; i < config.images.length; i++) {
             const imgPath = config.images[i];
             const fullUrl = getAssetUrl(imgPath);
             const imgBytes = await fetch(fullUrl).then(res => res.arrayBuffer());
-            
             let image;
             try { image = await pdfDoc.embedJpg(imgBytes); } 
             catch { image = await pdfDoc.embedPng(imgBytes); }
-
             const page = pdfDoc.addPage([image.width, image.height]);
             page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
         }
@@ -113,7 +141,7 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
 
     const pages = pdfDoc.getPages();
 
-    // Estampar Datos
+    // --- ESTAMPAR DATOS ---
     Object.entries(config.fields).forEach(([key, fieldConfig]) => {
       const value = data[key as keyof CCCFormData];
       
@@ -130,17 +158,28 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
         }
 
         targetPages.forEach(p => {
-             // Dibujar punto rojo en Modo Diseño
-             if (debugMode) {
-                const { width, height } = p.getSize();
-                // Dibujar grilla solo una vez por página si es necesario, 
-                // pero aquí solo dibujamos el punto del campo
-                p.drawCircle({ x: fieldConfig.x, y: fieldConfig.y, size: 3, color: rgb(1, 0, 0) });
-                p.drawText(`${key} (${fieldConfig.x},${fieldConfig.y})`, {
-                    x: fieldConfig.x + 5, y: fieldConfig.y + 5, size: 6, font: helvetica, color: rgb(1, 0, 0)
+             // 1. "BORRAR" LO QUE HABÍA ANTES (Dibujar parche blanco)
+             // Esto es vital para PDFs que ya tienen texto
+             if (fieldConfig.boxWidth && fieldConfig.boxHeight) {
+                p.drawRectangle({
+                    x: fieldConfig.x,
+                    // Bajamos un poco Y (-2) para cubrir letras que cuelgan (g, j, p)
+                    y: fieldConfig.y - 3, 
+                    width: fieldConfig.boxWidth,
+                    height: fieldConfig.boxHeight,
+                    color: rgb(1, 1, 1), // BLANCO PURO
+                    opacity: debugMode ? 0.5 : 1, // En debug se ve semitransparente para ajustar
+                    borderColor: debugMode ? rgb(1, 0, 0) : undefined,
+                    borderWidth: debugMode ? 1 : 0,
                 });
+             }
+
+             // 2. Ayudas visuales (Modo Diseño)
+             if (debugMode) {
+                p.drawCircle({ x: fieldConfig.x, y: fieldConfig.y, size: 2, color: rgb(1, 0, 0) });
             }
 
+            // 3. Escribir el nuevo texto encima del parche blanco
             p.drawText(value.toString().toUpperCase(), {
                 x: fieldConfig.x,
                 y: fieldConfig.y,
@@ -152,7 +191,6 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
       }
     });
 
-    // Si estamos en modo diseño, dibujamos la grilla en TODAS las páginas
     if (debugMode) {
         pages.forEach((page, index) => {
             const { width, height } = page.getSize();

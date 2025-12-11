@@ -34,6 +34,10 @@ export interface PdfFieldConfig {
   page?: number; // 0 based index (0 = pagina 1, 1 = pagina 2, etc.)
   isGlobal?: boolean; // Si true, se imprime en todas las páginas (ej: encabezados)
   maxWidth?: number; // Para ajustar texto largo si es necesario
+  
+  // PROPIEDADES NUEVAS PARA "BORRAR" LO QUE HAY DEBAJO
+  boxWidth?: number;  // Ancho del parche blanco
+  boxHeight?: number; // Alto del parche blanco
 }
 
 export interface CityTemplateConfig {
