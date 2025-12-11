@@ -8,8 +8,7 @@ export const CITY_TEMPLATES: Record<string, CityTemplateConfig> = {
   'CALI': {
     templatePath: '/templates/plantilla_cali.pdf',
     
-    // 1. DEFINICIÓN DEL FORMULARIO (Lo que ve el usuario)
-    // Nota: Aquí NO incluimos Representante Legal porque la plantilla de Cali no tiene espacio editable para ello.
+    // 1. DEFINICIÓN DEL FORMULARIO
     formStructure: [
       {
         title: "Códigos de Seguridad",
@@ -24,96 +23,106 @@ export const CITY_TEMPLATES: Record<string, CityTemplateConfig> = {
         fields: [
           { key: 'razonSocial', label: 'Razón Social (Nombre)', required: true },
           { key: 'nit', label: 'NIT', required: true },
-          { key: 'matricula', label: 'No. Matrícula' },
-          { key: 'grupoNiif', label: 'Grupo NIIF' }
+          // Nota: La plantilla parece tener los campos en una sola columna vertical
         ]
       },
       {
-        title: "Ubicación y Contacto",
+        title: "Matrícula y Clasificación",
         fields: [
-          { key: 'ciudad', label: 'Municipio (Domicilio)', required: true },
-          { key: 'domicilio', label: 'Dirección Comercial' },
-          { key: 'departamento', label: 'Departamento' },
+          { key: 'matricula', label: 'No. Matrícula' },
+          { key: 'grupoNiif', label: 'Grupo NIIF (Ej: Grupo 3)' }
+        ]
+      },
+      {
+        title: "Ubicación Principal",
+        fields: [
+          { key: 'domicilio', label: 'Dirección Domicilio Principal' },
+          { key: 'ciudad', label: 'Municipio' },
           { key: 'correo', label: 'Correo Electrónico', type: 'email' },
-          { key: 'telefono', label: 'Teléfono' }
+          { key: 'telefono', label: 'Teléfono Comercial' }
         ]
       }
     ],
 
-    // 2. MAPEO DEL PDF (Dónde se pinta cada cosa)
+    // 2. MAPEO DEL PDF (Coordenadas ajustadas a columna única alineada a la izquierda)
+    // Fuente Courier tamaño 11 para coincidir con el original.
     pdfMapping: {
-      // --- ENCABEZADOS ---
+      // --- ENCABEZADOS SUPERIORES ---
       fecha: { 
-        x: 440, y: 715, size: 9, isGlobal: true, font: 'Courier',
-        boxWidth: 130, boxHeight: 14 // Aumentado para borrar bien
+        x: 460, y: 718, size: 10, isGlobal: true, font: 'Courier',
+        boxWidth: 140, boxHeight: 14 
       }, 
       recibo: { 
-        x: 380, y: 700, size: 9, font: 'Courier', isGlobal: true,
+        x: 380, y: 703, size: 10, font: 'Courier', isGlobal: true,
         boxWidth: 200, boxHeight: 14
       },
       codigoVerificacion: { 
-        x: 420, y: 688, size: 9, font: 'Helvetica-Bold', isGlobal: true,
+        x: 420, y: 691, size: 10, font: 'Helvetica-Bold', isGlobal: true,
         boxWidth: 150, boxHeight: 14
       },
 
-      // --- PAGINA 1: DATOS EMPRESA ---
-      // Razón social: Tapamos "INVERSIONES LA OCCIDENTAL..."
+      // --- SECCIÓN 1: NOMBRE, IDENTIFICACIÓN Y DOMICILIO ---
+      // Alineación X = 230 aprox (según captura, indentado respecto a etiquetas)
+      
       razonSocial: { 
-        x: 210, y: 562, size: 9, font: 'Courier', page: 0,
-        boxWidth: 380, boxHeight: 25 // Ancho largo para tapar todo el nombre anterior
+        x: 230, y: 575, size: 11, font: 'Courier', page: 0,
+        boxWidth: 360, boxHeight: 16 // Alto aumentado para borrar bien
       },
       
-      // NIT: Tapamos el numero anterior
       nit: { 
-        x: 210, y: 549, size: 9, font: 'Courier', page: 0,
-        boxWidth: 150, boxHeight: 12
+        x: 230, y: 562, size: 11, font: 'Courier', page: 0,
+        boxWidth: 150, boxHeight: 16
       },
       
-      // Domicilio principal (CALI)
+      // En la sección "Domicilio principal" (arriba) a veces solo va la ciudad
       ciudad: { 
-        x: 210, y: 536, size: 9, font: 'Courier', page: 0,
-        boxWidth: 150, boxHeight: 12
+        x: 230, y: 549, size: 11, font: 'Courier', page: 0,
+        boxWidth: 150, boxHeight: 16
       },
 
-      // --- COLUMNA DERECHA ---
+      // --- SECCIÓN 2: MATRÍCULA ---
+      // Está más abajo. Ajustamos Y. Alineación X igual a la de arriba.
+      
       matricula: { 
-        x: 420, y: 506, size: 9, font: 'Courier', page: 0,
-        boxWidth: 100, boxHeight: 12
-      },
-      grupoNiif: { 
-        x: 420, y: 480, size: 9, font: 'Courier', page: 0,
-        boxWidth: 100, boxHeight: 12
+        x: 230, y: 495, size: 11, font: 'Courier', page: 0,
+        boxWidth: 100, boxHeight: 16
       },
       
-      // Ubicación Abajo
-      domicilio: { 
-        x: 420, y: 412, size: 8, font: 'Courier', page: 0,
-        boxWidth: 180, boxHeight: 25 // Caja alta para direcciones largas
+      // Fecha matricula (hardcodeada o campo extra? Por ahora omitida en form, asumimos fija o manual)
+      
+      grupoNiif: { 
+        x: 230, y: 469, size: 11, font: 'Courier', page: 0,
+        boxWidth: 150, boxHeight: 16
       },
-      // El departamento a veces va debajo del municipio o en la dirección, 
-      // para este ejemplo lo mapeamos cerca de la dirección si fuera necesario, 
-      // o lo omitimos del PDF si la plantilla no lo muestra explícitamente aparte.
-      // En la foto se ve "Municipio: VALLE". Asumiremos que 'departamento' se usa ahí.
+      
+      // --- SECCIÓN 3: UBICACIÓN ---
+      // Dirección del domicilio principal
+      domicilio: { 
+        x: 230, y: 425, size: 11, font: 'Courier', page: 0,
+        boxWidth: 300, boxHeight: 16
+      },
+      
+      // Municipio (debajo de dirección) - Reutilizamos 'ciudad' si es el mismo, 
+      // pero si se necesita otro campo 'municipio', usaremos 'departamento' como comodín visual
       departamento: {
-         x: 420, y: 399, size: 9, font: 'Courier', page: 0, // Ajustado a "Municipio: VALLE" abajo
-         boxWidth: 100, boxHeight: 12
+         x: 230, y: 412, size: 11, font: 'Courier', page: 0, 
+         boxWidth: 150, boxHeight: 16
       },
        
-      // Correo
+      // Correo electrónico
       correo: {
-        x: 420, y: 386, size: 8, font: 'Courier', page: 0,
-        boxWidth: 180, boxHeight: 12
+        x: 230, y: 399, size: 11, font: 'Courier', page: 0,
+        boxWidth: 300, boxHeight: 16
       },
       
-      // Telefono
+      // Teléfono comercial 1
       telefono: {
-        x: 420, y: 373, size: 9, font: 'Courier', page: 0,
-        boxWidth: 100, boxHeight: 12
+        x: 230, y: 386, size: 11, font: 'Courier', page: 0,
+        boxWidth: 150, boxHeight: 16
       }
     }
   },
   
-  // Ejemplo de otra ciudad con campos distintos
   'BOGOTA': {
     images: ['/templates/BOG1.jpg'], 
     formStructure: [
@@ -121,7 +130,7 @@ export const CITY_TEMPLATES: Record<string, CityTemplateConfig> = {
          title: "Datos Básicos",
          fields: [
             { key: 'razonSocial', label: 'Razón Social', required: true},
-            { key: 'representante', label: 'Representante Legal', required: true}, // Bogotá SI pide representante
+            { key: 'representante', label: 'Representante Legal', required: true},
             { key: 'cedulaRep', label: 'Cédula Rep. Legal'}
          ]
        }
@@ -186,7 +195,6 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
     const pages = pdfDoc.getPages();
 
     // --- ESTAMPAR DATOS ---
-    // Iteramos sobre las claves definidas en el mapa del PDF, no sobre los datos
     Object.keys(config.pdfMapping).forEach((keyStr) => {
       const key = keyStr as keyof CCCFormData;
       const fieldConfig = config.pdfMapping[key];
@@ -208,11 +216,10 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
              // 1. "BORRAR" LO QUE HABÍA ANTES (Dibujar parche)
              if (fieldConfig.boxWidth && fieldConfig.boxHeight) {
                 p.drawRectangle({
-                    x: fieldConfig.x - 2, 
-                    y: fieldConfig.y - 3, 
+                    x: fieldConfig.x - 4, // Un poco más a la izquierda para asegurar el inicio
+                    y: fieldConfig.y - 4, // Un poco más abajo para cubrir descuelgues
                     width: fieldConfig.boxWidth,
                     height: fieldConfig.boxHeight,
-                    // BLANCO para borrar, ROJO para debug
                     color: debugMode ? rgb(1, 0, 0) : rgb(1, 1, 1), 
                     opacity: debugMode ? 0.3 : 1, 
                     borderColor: debugMode ? rgb(1, 0, 0) : undefined,
@@ -229,7 +236,7 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
             p.drawText(value.toString().toUpperCase(), {
                 x: fieldConfig.x,
                 y: fieldConfig.y,
-                size: fieldConfig.size || 10,
+                size: fieldConfig.size || 11, // Default size aumentado a 11
                 font: fontToUse,
                 color: debugMode ? rgb(0, 0, 1) : rgb(0.15, 0.15, 0.15),
             });
