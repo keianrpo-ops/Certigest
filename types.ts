@@ -33,11 +33,15 @@ export interface PdfFieldConfig {
   font?: 'Helvetica' | 'Helvetica-Bold' | 'Courier'; // Courier es bueno para códigos
   page?: number; // 0 based index (0 = pagina 1, 1 = pagina 2, etc.)
   isGlobal?: boolean; // Si true, se imprime en todas las páginas (ej: encabezados)
+  maxWidth?: number; // Para ajustar texto largo si es necesario
 }
 
 export interface CityTemplateConfig {
-  // Ahora aceptamos un array de nombres de imagen para crear un PDF multipágina
-  images: string[]; 
+  // Opción A: Usar un PDF existente como base (MEJOR CALIDAD)
+  templatePath?: string;
+  // Opción B: Usar imágenes (LEGADO)
+  images?: string[]; 
+  
   fields: {
     [key in keyof CCCFormData]?: PdfFieldConfig;
   };
