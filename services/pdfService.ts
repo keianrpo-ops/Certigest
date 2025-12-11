@@ -53,8 +53,8 @@ export const CITY_TEMPLATES: Record<string, CityTemplateConfig> = {
       
       // --- ENCABEZADOS SUPERIORES ---
       fecha: { 
-        x: 480, // Derecha
-        y: 700, // Altura
+        x: 320, // Derecha
+        y: 710, // Altura
         size: 9 
       }, 
       recibo: { x: 380, y: 680, size: 9 },
