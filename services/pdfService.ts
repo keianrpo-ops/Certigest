@@ -9,74 +9,75 @@ export const CITY_TEMPLATES: Record<string, CityTemplateConfig> = {
     templatePath: '/templates/plantilla_cali.pdf',
     
     fields: {
-      // --- ENCABEZADOS GLOBAL (Tapan la fecha y códigos viejos) ---
+      // --- ENCABEZADOS (Parte Superior Derecha) ---
       
-      // Fecha: Está arriba a la derecha. Tapamos "// 01:10:43 pm"
+      // Fecha: Tapamos "// 01:10:43 pm" (o la fecha vieja)
       fecha: { 
-        x: 380, y: 708, size: 9, isGlobal: true,
-        boxWidth: 150, boxHeight: 12 
+        x: 440, y: 720, size: 9, isGlobal: true,
+        boxWidth: 120, boxHeight: 12 
       }, 
       
-      // Recibo: Centro arriba. Tapamos "570875, Valor: $0" (o lo que haya)
+      // Recibo: Tapamos el número y valor. "Recibo No. XXXXX"
       recibo: { 
-        x: 280, y: 685, size: 10, font: 'Courier', isGlobal: true,
+        x: 380, y: 705, size: 9, font: 'Courier', isGlobal: true,
+        boxWidth: 180, boxHeight: 12
+      },
+      
+      // Código verificación: Debajo del recibo.
+      codigoVerificacion: { 
+        x: 420, y: 692, size: 9, font: 'Helvetica-Bold', isGlobal: true,
+        boxWidth: 140, boxHeight: 12
+      },
+
+      // --- PAGINA 1: DATOS EMPRESA (Columna Izquierda / Central) ---
+      // Basado en alineación visual con "INVERSIONES LA OCCIDENTAL..."
+      
+      // Razón social:
+      razonSocial: { 
+        x: 210, y: 563, size: 9, font: 'Helvetica-Bold', page: 0,
+        boxWidth: 350, boxHeight: 25 // Caja alta para 2 líneas
+      },
+      
+      // NIT: Justo debajo
+      nit: { 
+        x: 210, y: 549, size: 9, page: 0,
+        boxWidth: 150, boxHeight: 11
+      },
+      
+      // Domicilio principal (Ciudad)
+      ciudad: { 
+        x: 210, y: 536, size: 9, page: 0,
+        boxWidth: 150, boxHeight: 11
+      },
+
+      // --- PAGINA 1: COLUMNA DERECHA (Matrícula) ---
+      
+      // Matrícula No.
+      matricula: { 
+        x: 420, y: 506, size: 9, page: 0,
+        boxWidth: 100, boxHeight: 11
+      },
+      
+      // Grupo NIIF
+      grupoNiif: { 
+        x: 420, y: 480, size: 9, page: 0,
+        boxWidth: 100, boxHeight: 11
+      },
+      
+      // Ubicación (Sección inferior derecha)
+      domicilio: { 
+        x: 420, y: 412, size: 8, page: 0, // Letra un poco más pequeña si es larga
+        boxWidth: 170, boxHeight: 25 // Caja alta para dirección larga
+      },
+      
+      // --- PAGINA DE FIRMA (Página 2 en el PDF de 2 hojas) ---
+      // Ajustar x/y para que caiga sobre "RODRIGO CANO" viejo o espacio vacío
+      representante: { 
+        x: 180, y: 155, size: 9, page: 1, 
         boxWidth: 200, boxHeight: 15
       },
-      
-      // Código verificación: Debajo del recibo. Tapamos "0822PPZZJ6"
-      codigoVerificacion: { 
-        x: 350, y: 672, size: 10, font: 'Helvetica-Bold', isGlobal: true,
-        boxWidth: 150, boxHeight: 12
-      },
-
-      // --- PAGINA 1: DATOS EMPRESA (Tapan INVERSIONES LA OCCIDENTAL...) ---
-      
-      // Razón social: Tapamos "INVERSIONES LA OCCIDENTAL CALI LTDA..."
-      razonSocial: { 
-        x: 200, y: 562, size: 9, font: 'Helvetica-Bold', page: 0,
-        boxWidth: 350, boxHeight: 25 // Caja alta por si tiene 2 líneas
-      },
-      
-      // NIT: Tapamos "8903048824"
-      nit: { 
-        x: 200, y: 548, size: 9, page: 0,
-        boxWidth: 100, boxHeight: 12
-      },
-      
-      // Domicilio principal: Tapamos "CALI"
-      ciudad: { 
-        x: 200, y: 535, size: 9, page: 0,
-        boxWidth: 100, boxHeight: 12
-      },
-
-      // --- COLUMNA DERECHA ---
-      
-      // Matrícula: Tapamos "264544"
-      matricula: { 
-        x: 420, y: 505, size: 9, page: 0,
-        boxWidth: 100, boxHeight: 12
-      },
-      
-      // Grupo NIIF: Tapamos "Grupo 3"
-      grupoNiif: { 
-        x: 420, y: 478, size: 9, page: 0,
-        boxWidth: 100, boxHeight: 12
-      },
-      
-      // Ubicación (Sección inferior) - Tapamos "AVENIDA 5 A..."
-      domicilio: { 
-        x: 420, y: 410, size: 9, page: 0,
-        boxWidth: 150, boxHeight: 12
-      },
-      
-      // --- PAGINA DE FIRMA (Pagina 2 o ultima según tu PDF) ---
-      // Si quieres tapar el nombre del representante antiguo abajo a la derecha o izquierda
-      representante: { 
-        x: 100, y: 150, size: 9, page: 1, // Página 2
-        boxWidth: 200, boxHeight: 20
-      },
       cedulaRep: { 
-        x: 100, y: 140, size: 9, page: 1, // Página 2
+        x: 180, y: 143, size: 9, page: 1, 
         boxWidth: 100, boxHeight: 12
       }
     }
@@ -158,34 +159,36 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
         }
 
         targetPages.forEach(p => {
-             // 1. "BORRAR" LO QUE HABÍA ANTES (Dibujar parche blanco)
-             // Esto es vital para PDFs que ya tienen texto
+             // 1. "BORRAR" LO QUE HABÍA ANTES (Dibujar parche)
              if (fieldConfig.boxWidth && fieldConfig.boxHeight) {
                 p.drawRectangle({
-                    x: fieldConfig.x,
-                    // Bajamos un poco Y (-2) para cubrir letras que cuelgan (g, j, p)
-                    y: fieldConfig.y - 3, 
+                    x: fieldConfig.x - 2, // Margen izquierdo ligero
+                    // Ajuste vertical: Bajamos 2 puntos de la linea base del texto
+                    y: fieldConfig.y - 2, 
                     width: fieldConfig.boxWidth,
                     height: fieldConfig.boxHeight,
-                    color: rgb(1, 1, 1), // BLANCO PURO
-                    opacity: debugMode ? 0.5 : 1, // En debug se ve semitransparente para ajustar
+                    // Si DebugMode = true, el fondo es rojo transparente para ver dónde borra.
+                    // Si DebugMode = false, el fondo es BLANCO solido para borrar.
+                    color: debugMode ? rgb(1, 0, 0) : rgb(1, 1, 1), 
+                    opacity: debugMode ? 0.3 : 1, 
                     borderColor: debugMode ? rgb(1, 0, 0) : undefined,
                     borderWidth: debugMode ? 1 : 0,
                 });
              }
 
-             // 2. Ayudas visuales (Modo Diseño)
+             // 2. Ayudas visuales (Punto de anclaje)
              if (debugMode) {
-                p.drawCircle({ x: fieldConfig.x, y: fieldConfig.y, size: 2, color: rgb(1, 0, 0) });
+                p.drawCircle({ x: fieldConfig.x, y: fieldConfig.y, size: 2, color: rgb(0, 0, 1) });
+                p.drawText(key, {x: fieldConfig.x, y: fieldConfig.y + 10, size: 6, font: helvetica, color: rgb(0,0,1)});
             }
 
-            // 3. Escribir el nuevo texto encima del parche blanco
+            // 3. Escribir el nuevo texto
             p.drawText(value.toString().toUpperCase(), {
                 x: fieldConfig.x,
                 y: fieldConfig.y,
-                size: fieldConfig.size || 10,
+                size: fieldConfig.size || 9,
                 font: fontToUse,
-                color: debugMode ? rgb(1, 0, 0) : rgb(0.15, 0.15, 0.15),
+                color: rgb(0.15, 0.15, 0.15), // Negro suave, se ve más real que negro puro
             });
         });
       }
