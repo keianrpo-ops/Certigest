@@ -53,7 +53,7 @@ export const CITY_TEMPLATES: Record<string, CityTemplateConfig> = {
       
       // --- ENCABEZADOS SUPERIORES ---
       fecha: { 
-        x: 320, // Derecha
+        x: 120, // Derecha
         y: 710, // Altura
         size: 9 
       }, 
@@ -63,7 +63,7 @@ export const CITY_TEMPLATES: Record<string, CityTemplateConfig> = {
       // --- SECCIÓN 1: NOMBRE, IDENTIFICACIÓN ---
       razonSocial: { 
         x: 215, 
-        y: 492, // Si está muy alto, baja este número a 490 o 488
+        y: 486, // Si está muy alto, baja este número a 490 o 488
         size: 9, 
         font: 'Courier-Bold' 
       },
