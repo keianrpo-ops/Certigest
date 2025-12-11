@@ -31,7 +31,7 @@ export interface PdfFieldConfig {
   x: number;
   y: number;
   size?: number;
-  font?: 'Helvetica' | 'Helvetica-Bold' | 'Courier'; 
+  font?: 'Courier' | 'Courier-Bold'; 
   page?: number; 
   isGlobal?: boolean; 
   maxWidth?: number; 

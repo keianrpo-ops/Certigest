@@ -51,7 +51,8 @@ export const CITY_TEMPLATES: Record<string, CityTemplateConfig> = {
       codigoVerificacion: { x: 420, y: 668, size: 9 },
 
       // --- SECCIÓN 1: NOMBRE, IDENTIFICACIÓN Y DOMICILIO ---
-      razonSocial: { x: 215, y: 492, size: 9, font: 'Helvetica-Bold' },
+      // Usamos Courier-Bold solo aquí
+      razonSocial: { x: 215, y: 492, size: 9, font: 'Courier-Bold' }, 
       nit: { x: 215, y: 480, size: 9 },
       ciudad: { x: 215, y: 468, size: 9 }, // Domicilio principal (Ciudad)
 
@@ -128,25 +129,28 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
         throw new Error("Falta templatePath.");
     }
     
-    // Cargar fuentes
-    const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    // Cargar fuentes COURIER (Tipo máquina de escribir)
     const courier = await pdfDoc.embedFont(StandardFonts.Courier);
+    const courierBold = await pdfDoc.embedFont(StandardFonts.CourierBold);
 
     const pages = pdfDoc.getPages();
 
     // Función auxiliar para dibujar texto
     const drawField = (text: string, cfg: PdfFieldConfig) => {
-        let font = helvetica;
-        if (cfg.font === 'Helvetica-Bold') font = helveticaBold;
-        if (cfg.font === 'Courier') font = courier;
+        // Por defecto Courier
+        let font = courier;
+        
+        // Si la config pide Bold, usamos Courier Bold
+        if (cfg.font === 'Courier-Bold') {
+            font = courierBold;
+        }
 
         // Seleccionar página
         const pageIndex = cfg.page || 0;
         if (pageIndex >= pages.length) return;
         const page = pages[pageIndex];
 
-        // Dibujar texto
+        // Dibujar texto (siempre negro)
         page.drawText(text, {
             x: cfg.x,
             y: cfg.y,
