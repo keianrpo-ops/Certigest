@@ -53,11 +53,11 @@ export const CITY_TEMPLATES: Record<string, CityTemplateConfig> = {
       
       // --- ENCABEZADOS SUPERIORES ---
       fecha: { 
-        x: 120, // Derecha
-        y: 710, // Altura
+        x: 190, // Derecha
+        y: 688, // Altura
         size: 9 
       }, 
-      recibo: { x: 380, y: 680, size: 9 },
+      recibo: { x: 380, y: 750, size: 9 },
       codigoVerificacion: { x: 420, y: 668, size: 9 },
 
       // --- SECCIÓN 1: NOMBRE, IDENTIFICACIÓN ---
@@ -68,37 +68,37 @@ export const CITY_TEMPLATES: Record<string, CityTemplateConfig> = {
         font: 'Courier-Bold' 
       },
       
-      nit: { x: 215, y: 480, size: 9 },
+      nit: { x: 210, y: 680, size: 9 },
       
-      ciudad: { x: 215, y: 468, size: 9 }, // Municipio principal
+      ciudad: { x: 210, y: 468, size: 9 }, // Municipio principal
 
       // --- SECCIÓN 2: MATRÍCULA ---
-      matricula: { x: 215, y: 424, size: 9 },
+      matricula: { x: 210, y: 424, size: 9 },
       
-      grupoNiif: { x: 215, y: 400, size: 9 },
+      grupoNiif: { x: 210, y: 400, size: 9 },
       
       // --- SECCIÓN 3: UBICACIÓN COMERCIAL ---
       // (Se imprime en dos lugares: Comercial y Judicial)
       domicilio: [
-        { x: 215, y: 357, size: 9 }, // Dirección Comercial (Arriba)
-        { x: 215, y: 265, size: 9 }  // Dirección Judicial (Abajo)
+        { x: 210, y: 357, size: 9 }, // Dirección Comercial (Arriba)
+        { x: 210, y: 265, size: 9 }  // Dirección Judicial (Abajo)
       ],
       
       departamento: [
-        { x: 215, y: 345, size: 9 }, // Dept. Comercial
-        { x: 215, y: 253, size: 9 }  // Dept. Judicial
+        { x: 210, y: 345, size: 9 }, // Dept. Comercial
+        { x: 210, y: 253, size: 9 }  // Dept. Judicial
       ],
        
       correo: [
-        { x: 215, y: 333, size: 9 }, // Email Comercial
-        { x: 215, y: 241, size: 9 }  // Email Judicial
+        { x: 210, y: 333, size: 9 }, // Email Comercial
+        { x: 210, y: 241, size: 9 }  // Email Judicial
       ],
       
       // --- TELÉFONOS (Se repiten 6 veces) ---
       telefono: [
         // Bloque Comercial
-        { x: 215, y: 321, size: 9 }, 
-        { x: 215, y: 309, size: 9 },
+        { x: 210, y: 321, size: 9 }, 
+        { x: 210, y: 309, size: 9 },
         { x: 215, y: 297, size: 9 },
         // Bloque Judicial
         { x: 215, y: 229, size: 9 },
