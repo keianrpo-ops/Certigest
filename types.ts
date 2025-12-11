@@ -14,6 +14,9 @@ export interface CCCFormData {
   departamento: string;
   correo: string;
   telefono: string;
+  // Campos únicos de seguridad
+  recibo: string;
+  codigoVerificacion: string;
 }
 
 export interface LogEntry {
@@ -27,11 +30,14 @@ export interface PdfFieldConfig {
   x: number;
   y: number;
   size?: number;
-  font?: 'Helvetica' | 'Helvetica-Bold';
+  font?: 'Helvetica' | 'Helvetica-Bold' | 'Courier'; // Courier es bueno para códigos
+  page?: number; // 0 based index (0 = pagina 1, 1 = pagina 2, etc.)
+  isGlobal?: boolean; // Si true, se imprime en todas las páginas (ej: encabezados)
 }
 
 export interface CityTemplateConfig {
-  url: string; // Ruta al archivo PDF base (ej: /templates/cali.pdf)
+  // Ahora aceptamos un array de nombres de imagen para crear un PDF multipágina
+  images: string[]; 
   fields: {
     [key in keyof CCCFormData]?: PdfFieldConfig;
   };

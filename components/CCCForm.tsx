@@ -3,7 +3,7 @@ import { CCCFormData } from '../types';
 import Button from './Button';
 import Input from './Input';
 import { generateCCCPdf } from '../services/pdfService';
-import { FileText, Save, X, RotateCcw, Loader2 } from 'lucide-react';
+import { Save, X, RotateCcw, Loader2, Grid3X3, Wand2 } from 'lucide-react';
 
 interface Props {
   onCancel: () => void;
@@ -16,22 +16,55 @@ const initialData: CCCFormData = {
   ciudad: 'CALI',
   representante: 'RODRIGO CANO',
   cedulaRep: '19055229',
-  fecha: new Date().toISOString().split('T')[0],
+  // Usamos una fecha con formato completo incluyendo hora para el PDF
+  fecha: new Date().toLocaleString('es-CO'), 
   matricula: '882211',
   grupoNiif: 'GRUPO 3',
   domicilio: 'CARRERA 24 B 51 70',
   departamento: 'VALLE',
   correo: 'contingencia@proton.me',
   telefono: '3151564001',
+  recibo: '',
+  codigoVerificacion: ''
 };
 
 const CCCForm: React.FC<Props> = ({ onCancel, onLog }) => {
   const [formData, setFormData] = useState<CCCFormData>(initialData);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
+
+  // Generar códigos aleatorios al montar si están vacíos
+  React.useEffect(() => {
+    if (!formData.recibo) generateSecurityCodes();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const generateSecurityCodes = () => {
+    // Generar Recibo (Ej: 8502502)
+    const randomRecibo = Math.floor(Math.random() * (9999999 - 1000000) + 1000000).toString();
+    
+    // Generar Código de Verificación (Ej: 0822NXIH99)
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let randomCode = '';
+    for (let i = 0; i < 10; i++) {
+        randomCode += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    setFormData(prev => ({
+        ...prev,
+        recibo: randomRecibo,
+        codigoVerificacion: randomCode,
+        fecha: new Date().toLocaleString('es-CO', { 
+            year: 'numeric', month: '2-digit', day: '2-digit', 
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            hour12: true
+        }).replace(',', '')
+    }));
+    onLog('Nuevos códigos de seguridad generados.');
   };
 
   const handleReset = () => {
@@ -49,20 +82,21 @@ const CCCForm: React.FC<Props> = ({ onCancel, onLog }) => {
         correo: '',
         telefono: ''
     });
-    onLog('Formulario limpiado.');
+    generateSecurityCodes();
+    onLog('Formulario limpiado (códigos regenerados).');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsGenerating(true);
-    onLog(`Iniciando mapeo de PDF para ciudad: ${formData.ciudad}...`);
+    onLog(`Generando certificado multipágina para: ${formData.ciudad}...`);
     
     try {
-      await generateCCCPdf(formData);
-      onLog('PDF generado sobre plantilla exitosamente.');
+      await generateCCCPdf(formData, debugMode);
+      onLog('PDF generado y descargado.');
     } catch (error) {
       console.error(error);
-      onLog('Error al procesar la plantilla PDF.');
+      onLog('Error crítico generando el PDF.');
     } finally {
       setIsGenerating(false);
     }
@@ -72,19 +106,55 @@ const CCCForm: React.FC<Props> = ({ onCancel, onLog }) => {
     <div className="animate-fadeIn">
       <div className="mb-6 flex justify-between items-end">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2">Generador por Plantilla</h2>
+          <h2 className="text-2xl font-bold text-white mb-2">Generador por Imágenes</h2>
           <p className="text-slate-400 text-sm">
-            Los datos se estamparán sobre el PDF base configurado para <span className="text-cyan-400 font-bold">{formData.ciudad || '...'}</span>.
+            Sube tus imágenes JPG a <code className="bg-slate-800 px-1 rounded text-xs text-cyan-400">/public/templates/</code>
           </p>
         </div>
+        
+        {/* Toggle Modo Diseño */}
+        <button 
+            type="button"
+            onClick={() => setDebugMode(!debugMode)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                debugMode 
+                ? 'bg-purple-900/50 border-purple-500 text-purple-300' 
+                : 'bg-slate-900 border-slate-700 text-slate-500 hover:text-slate-300'
+            }`}
+        >
+            <Grid3X3 size={14} />
+            {debugMode ? 'MODO DISEÑO ACTIVADO' : 'Activar Modo Diseño'}
+        </button>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 shadow-2xl backdrop-blur-sm space-y-8">
         
+        {/* Section: Seguridad (Automática) */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between bg-gradient-to-r from-yellow-500/20 to-transparent p-3 rounded-lg border-l-2 border-yellow-500">
+            <h3 className="text-yellow-400 font-bold text-sm uppercase tracking-wider flex items-center gap-2">
+                <Wand2 size={16} />
+                Códigos de Seguridad (Únicos)
+            </h3>
+            <button 
+                type="button" 
+                onClick={generateSecurityCodes}
+                className="text-xs text-yellow-300 hover:text-white underline"
+            >
+                Regenerar Códigos
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Input name="recibo" label="No. Recibo (Auto)" value={formData.recibo} onChange={handleChange} required className="border-yellow-500/30 text-yellow-100 font-mono" />
+            <Input name="codigoVerificacion" label="Cód. Verificación (Auto)" value={formData.codigoVerificacion} onChange={handleChange} required className="border-yellow-500/30 text-yellow-100 font-mono" />
+            <Input name="fecha" label="Fecha y Hora Emisión" value={formData.fecha} onChange={handleChange} required className="border-yellow-500/30 text-yellow-100" />
+          </div>
+        </div>
+
         {/* Section 1 */}
         <div className="space-y-4">
           <div className="bg-gradient-to-r from-cyan-500/20 to-transparent p-3 rounded-lg border-l-2 border-cyan-500">
-            <h3 className="text-cyan-400 font-bold text-sm uppercase tracking-wider">1. Datos de Identificación (Mapping)</h3>
+            <h3 className="text-cyan-400 font-bold text-sm uppercase tracking-wider">1. Datos de Identificación</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input name="razonSocial" label="Razón Social" placeholder="Ej: CALI VOLQUETAS..." value={formData.razonSocial} onChange={handleChange} required />
@@ -100,7 +170,7 @@ const CCCForm: React.FC<Props> = ({ onCancel, onLog }) => {
             <h3 className="text-cyan-400 font-bold text-sm uppercase tracking-wider">2. Datos de Ubicación</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input name="ciudad" label="Ciudad (Define la plantilla)" placeholder="Ej: CALI" value={formData.ciudad} onChange={handleChange} />
+            <Input name="ciudad" label="Ciudad" placeholder="Ej: CALI" value={formData.ciudad} onChange={handleChange} />
             <Input name="departamento" label="Departamento" placeholder="Ej: VALLE" value={formData.departamento} onChange={handleChange} />
             <Input name="domicilio" label="Dirección Principal" placeholder="Ej: CRA 10 #..." value={formData.domicilio} onChange={handleChange} />
             <Input name="correo" type="email" label="Correo Electrónico" value={formData.correo} onChange={handleChange} />
@@ -116,7 +186,6 @@ const CCCForm: React.FC<Props> = ({ onCancel, onLog }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input name="representante" label="Representante Legal" placeholder="Nombre Completo" value={formData.representante} onChange={handleChange} required />
             <Input name="cedulaRep" label="Identificación" placeholder="Cédula" value={formData.cedulaRep} onChange={handleChange} required />
-            <Input name="fecha" type="date" label="Fecha Renovación" value={formData.fecha} onChange={handleChange} />
           </div>
         </div>
 
@@ -124,7 +193,7 @@ const CCCForm: React.FC<Props> = ({ onCancel, onLog }) => {
         <div className="pt-4 flex flex-col md:flex-row justify-between gap-3 border-t border-slate-800">
           <Button type="button" variant="ghost" onClick={handleReset} className="text-slate-500 hover:text-white" disabled={isGenerating}>
             <RotateCcw size={16} />
-            Limpiar Datos
+            Limpiar Todo
           </Button>
           
           <div className="flex gap-3">
@@ -134,7 +203,7 @@ const CCCForm: React.FC<Props> = ({ onCancel, onLog }) => {
             </Button>
             <Button type="submit" variant="primary" disabled={isGenerating}>
               {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-              {isGenerating ? 'Mapeando...' : 'Generar PDF'}
+              {isGenerating ? 'Generando Documento...' : 'Generar PDF'}
             </Button>
           </div>
         </div>
