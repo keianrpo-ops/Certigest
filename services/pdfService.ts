@@ -29,13 +29,13 @@ export const CITY_TEMPLATES: Record<string, CityTemplateConfig> = {
         title: "Matrícula y Clasificación",
         fields: [
           { key: 'matricula', label: 'No. Matrícula' },
-          { key: 'grupoNiif', label: 'Grupo NIIF (Ej: Grupo 3)' }
+          { key: 'grupoNiif', label: 'Grupo NIIF' }
         ]
       },
       {
         title: "Ubicación Principal",
         fields: [
-          { key: 'domicilio', label: 'Dirección Domicilio Principal' },
+          { key: 'domicilio', label: 'Dirección Domicilio' },
           { key: 'ciudad', label: 'Municipio' },
           { key: 'correo', label: 'Correo Electrónico', type: 'email' },
           { key: 'telefono', label: 'Teléfono Comercial' }
@@ -43,82 +43,88 @@ export const CITY_TEMPLATES: Record<string, CityTemplateConfig> = {
       }
     ],
 
-    // 2. MAPEO DEL PDF (Solo coordenadas para parches blancos)
-    // Ajustado para borrar la información de la columna derecha que aparecía en tu foto
+    // 2. MAPEO DEL PDF (Coordenadas ajustadas para coincidir con la imagen)
     pdfMapping: {
       // --- ENCABEZADOS SUPERIORES ---
+      // Estos parecían estar mas o menos bien ubicados en la zona superior
       fecha: { 
         x: 460, y: 718, isGlobal: true, 
         boxWidth: 140, boxHeight: 14 
       }, 
       recibo: { 
-        x: 380, y: 703, isGlobal: true,
+        x: 380, y: 708, isGlobal: true, // Ajustado ligeramente arriba
         boxWidth: 200, boxHeight: 14
       },
       codigoVerificacion: { 
-        x: 420, y: 691, isGlobal: true,
+        x: 420, y: 696, isGlobal: true, // Ajustado ligeramente arriba
         boxWidth: 150, boxHeight: 14
       },
 
       // --- SECCIÓN 1: NOMBRE, IDENTIFICACIÓN Y DOMICILIO ---
-      // X ajustado a 215 para empezar justo después de los dos puntos ":"
+      // Bajamos de ~575 a ~525 para coincidir con la posición real
       
       razonSocial: { 
-        x: 215, y: 575, page: 0,
-        boxWidth: 380, boxHeight: 15 // Tapa "INVERSIONES..."
+        x: 215, y: 525, page: 0,
+        boxWidth: 380, boxHeight: 14 // Tapa "INVERSIONES..."
       },
       
       nit: { 
-        x: 215, y: 562, page: 0,
-        boxWidth: 150, boxHeight: 12 // Tapa el número de NIT
+        x: 215, y: 513, page: 0,
+        boxWidth: 150, boxHeight: 12 // Tapa "890..."
       },
       
       ciudad: { 
-        x: 215, y: 549, page: 0,
-        boxWidth: 150, boxHeight: 12 // Tapa "CALI"
+        x: 215, y: 501, page: 0,
+        boxWidth: 150, boxHeight: 12 // Tapa "CALI" (Domicilio principal)
       },
 
       // --- SECCIÓN 2: MATRÍCULA ---
+      // Bajamos de ~495 a ~460
       
       matricula: { 
-        x: 215, y: 495, page: 0,
+        x: 215, y: 460, page: 0,
         boxWidth: 100, boxHeight: 12 // Tapa "264544"
       },
       
+      // La fecha de matrícula original está en Y ~448 (no la mapeamos aún pero calculamos el espacio)
+      
       grupoNiif: { 
-        x: 215, y: 469, page: 0,
+        x: 215, y: 436, page: 0,
         boxWidth: 150, boxHeight: 12 // Tapa "Grupo Grupo 3"
       },
       
       // --- SECCIÓN 3: UBICACIÓN ---
+      // Bajamos de ~425 a ~395
       
       domicilio: { 
-        x: 215, y: 425, page: 0,
+        x: 215, y: 395, page: 0,
         boxWidth: 350, boxHeight: 12 // Tapa "AVENIDA 5 A..."
       },
       
-      // Usamos el campo 'departamento' del form para tapar el campo "Municipio" del PDF si es necesario, 
-      // o reutilizamos ciudad. En tu foto dice "Municipio: VALLE".
+      // Usamos 'departamento' para borrar el municipio en esta sección si es diferente
       departamento: {
-         x: 215, y: 412, page: 0, 
+         x: 215, y: 383, page: 0, 
          boxWidth: 150, boxHeight: 12 // Tapa "VALLE"
       },
        
       correo: {
-        x: 215, y: 399, page: 0,
-        boxWidth: 350, boxHeight: 12 // Tapa el correo largo
+        x: 215, y: 371, page: 0,
+        boxWidth: 350, boxHeight: 12 // Tapa "contingencia..."
       },
       
       telefono: {
-        x: 215, y: 386, page: 0,
+        x: 215, y: 359, page: 0,
         boxWidth: 150, boxHeight: 12 // Tapa el primer teléfono
       }
+      
+      // NOTA: Los teléfonos 2 y 3 y la sección judicial siguen visibles porque 
+      // no tenemos campos en el formulario para ellos aún.
     }
   },
   
   'BOGOTA': {
     images: ['/templates/BOG1.jpg'], 
-    formStructure: [], // Omitido por brevedad
+    formStructure: [], 
     pdfMapping: {}
   }
 };
@@ -143,7 +149,6 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
   try {
     let pdfDoc: PDFDocument;
 
-    // --- CARGAR PDF ---
     if (config.templatePath) {
         const fullUrl = getAssetUrl(config.templatePath);
         const existingPdfBytes = await fetch(fullUrl).then(res => {
@@ -161,9 +166,8 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
     Object.keys(config.pdfMapping).forEach((keyStr) => {
       const key = keyStr as keyof CCCFormData;
       const fieldConfig = config.pdfMapping[key];
-      const value = data[key]; // Usamos el dato solo para saber si el campo está activo
       
-      if (fieldConfig) { // Quitamos chequeo de 'value' para forzar que se dibujen todos los parches de prueba
+      if (fieldConfig) {
         let targetPages: PDFPage[] = [];
         
         if (fieldConfig.isGlobal) {
@@ -176,26 +180,14 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
              // DIBUJAR RECUADRO BLANCO (Tapa lo de abajo)
              if (fieldConfig.boxWidth && fieldConfig.boxHeight) {
                 p.drawRectangle({
-                    x: fieldConfig.x - 2, // Margen de seguridad
-                    y: fieldConfig.y - 4, // Ajuste vertical
+                    x: fieldConfig.x - 2, 
+                    y: fieldConfig.y - 4, // Ajuste fino para centrar verticalmente sobre texto
                     width: fieldConfig.boxWidth,
-                    height: fieldConfig.boxHeight,
+                    height: fieldConfig.boxHeight + 4, // Un poco más alto para asegurar cobertura
                     color: rgb(1, 1, 1), // BLANCO PURO
-                    opacity: 1, // TOTALMENTE OPACO
+                    opacity: 1, 
                 });
              }
-
-             // --- TEXTO DESHABILITADO TEMPORALMENTE ---
-             // Descomentar en el siguiente paso cuando los parches estén bien
-             /*
-             p.drawText(value.toString().toUpperCase(), {
-                x: fieldConfig.x,
-                y: fieldConfig.y,
-                size: fieldConfig.size || 11,
-                font: fontToUse,
-                color: rgb(0.15, 0.15, 0.15),
-            });
-            */
         });
       }
     });
@@ -205,7 +197,7 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `PRUEBA_PARCHES_${data.ciudad}.pdf`;
+    link.download = `PRUEBA_PARCHES_V2_${data.ciudad}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
