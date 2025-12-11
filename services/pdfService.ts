@@ -46,79 +46,66 @@ export const CITY_TEMPLATES: Record<string, CityTemplateConfig> = {
     // 2. MAPEO DEL PDF (Coordenadas ajustadas para coincidir con la imagen)
     pdfMapping: {
       // --- ENCABEZADOS SUPERIORES ---
-      // Estos parecían estar mas o menos bien ubicados en la zona superior
       fecha: { 
         x: 460, y: 718, isGlobal: true, 
         boxWidth: 140, boxHeight: 14 
       }, 
       recibo: { 
-        x: 380, y: 708, isGlobal: true, // Ajustado ligeramente arriba
+        x: 380, y: 708, isGlobal: true,
         boxWidth: 200, boxHeight: 14
       },
       codigoVerificacion: { 
-        x: 420, y: 696, isGlobal: true, // Ajustado ligeramente arriba
+        x: 420, y: 696, isGlobal: true,
         boxWidth: 150, boxHeight: 14
       },
 
       // --- SECCIÓN 1: NOMBRE, IDENTIFICACIÓN Y DOMICILIO ---
-      // Bajamos de ~575 a ~525 para coincidir con la posición real
-      
       razonSocial: { 
         x: 215, y: 525, page: 0,
-        boxWidth: 380, boxHeight: 14 // Tapa "INVERSIONES..."
+        boxWidth: 380, boxHeight: 14 
       },
       
       nit: { 
         x: 215, y: 513, page: 0,
-        boxWidth: 150, boxHeight: 12 // Tapa "890..."
+        boxWidth: 150, boxHeight: 12
       },
       
       ciudad: { 
         x: 215, y: 501, page: 0,
-        boxWidth: 150, boxHeight: 12 // Tapa "CALI" (Domicilio principal)
+        boxWidth: 150, boxHeight: 12
       },
 
       // --- SECCIÓN 2: MATRÍCULA ---
-      // Bajamos de ~495 a ~460
-      
       matricula: { 
         x: 215, y: 460, page: 0,
-        boxWidth: 100, boxHeight: 12 // Tapa "264544"
+        boxWidth: 100, boxHeight: 12
       },
-      
-      // La fecha de matrícula original está en Y ~448 (no la mapeamos aún pero calculamos el espacio)
       
       grupoNiif: { 
         x: 215, y: 436, page: 0,
-        boxWidth: 150, boxHeight: 12 // Tapa "Grupo Grupo 3"
+        boxWidth: 150, boxHeight: 12
       },
       
       // --- SECCIÓN 3: UBICACIÓN ---
-      // Bajamos de ~425 a ~395
-      
       domicilio: { 
         x: 215, y: 395, page: 0,
-        boxWidth: 350, boxHeight: 12 // Tapa "AVENIDA 5 A..."
+        boxWidth: 350, boxHeight: 12
       },
       
-      // Usamos 'departamento' para borrar el municipio en esta sección si es diferente
       departamento: {
          x: 215, y: 383, page: 0, 
-         boxWidth: 150, boxHeight: 12 // Tapa "VALLE"
+         boxWidth: 150, boxHeight: 12
       },
        
       correo: {
         x: 215, y: 371, page: 0,
-        boxWidth: 350, boxHeight: 12 // Tapa "contingencia..."
+        boxWidth: 350, boxHeight: 12
       },
       
       telefono: {
         x: 215, y: 359, page: 0,
-        boxWidth: 150, boxHeight: 12 // Tapa el primer teléfono
+        boxWidth: 150, boxHeight: 12
       }
-      
-      // NOTA: Los teléfonos 2 y 3 y la sección judicial siguen visibles porque 
-      // no tenemos campos en el formulario para ellos aún.
     }
   },
   
@@ -162,7 +149,7 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
     
     const pages = pdfDoc.getPages();
 
-    // --- SOLO DIBUJAR PARCHES BLANCOS ---
+    // --- SOLO DIBUJAR PARCHES DE DEBUG (ROJO SEMITRANSPARENTE) ---
     Object.keys(config.pdfMapping).forEach((keyStr) => {
       const key = keyStr as keyof CCCFormData;
       const fieldConfig = config.pdfMapping[key];
@@ -177,15 +164,17 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
         }
 
         targetPages.forEach(p => {
-             // DIBUJAR RECUADRO BLANCO (Tapa lo de abajo)
+             // DIBUJAR RECUADRO ROJO TRANSPARENTE
              if (fieldConfig.boxWidth && fieldConfig.boxHeight) {
                 p.drawRectangle({
                     x: fieldConfig.x - 2, 
-                    y: fieldConfig.y - 4, // Ajuste fino para centrar verticalmente sobre texto
+                    y: fieldConfig.y - 4,
                     width: fieldConfig.boxWidth,
-                    height: fieldConfig.boxHeight + 4, // Un poco más alto para asegurar cobertura
-                    color: rgb(1, 1, 1), // BLANCO PURO
-                    opacity: 1, 
+                    height: fieldConfig.boxHeight + 4,
+                    color: rgb(1, 0, 0), // ROJO PARA DEPURAR
+                    opacity: 0.5, // SEMI TRANSPARENTE PARA VER ABAJO
+                    borderColor: rgb(1, 0, 0),
+                    borderWidth: 1
                 });
              }
         });
@@ -197,7 +186,7 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `PRUEBA_PARCHES_V2_${data.ciudad}.pdf`;
+    link.download = `DEBUG_ROJO_${data.ciudad}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
