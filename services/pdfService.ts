@@ -8,7 +8,7 @@ export const CITY_TEMPLATES: Record<string, CityTemplateConfig> = {
   'CALI': {
     templatePath: '/templates/plantilla_cali.pdf',
     
-    // 1. DEFINICIÓN DEL FORMULARIO
+    // 1. DEFINICIÓN DEL FORMULARIO (Lo que ve el usuario)
     formStructure: [
       {
         title: "Códigos de Seguridad",
@@ -43,47 +43,64 @@ export const CITY_TEMPLATES: Record<string, CityTemplateConfig> = {
       }
     ],
 
-    // 2. MAPEO DEL PDF (Coordenadas para ESCRIBIR texto)
+    // 2. MAPEO DEL PDF (AQUÍ ES DONDE AJUSTAS LAS POSICIONES)
+    // ---------------------------------------------------------
+    // GUÍA RÁPIDA:
+    // x: Número más grande = Mover a la DERECHA
+    // y: Número más grande = Mover hacia ARRIBA
+    // ---------------------------------------------------------
     pdfMapping: {
+      
       // --- ENCABEZADOS SUPERIORES ---
-      fecha: { x: 480, y: 700, size: 9 }, 
+      fecha: { 
+        x: 480, // Derecha
+        y: 700, // Altura
+        size: 9 
+      }, 
       recibo: { x: 380, y: 680, size: 9 },
       codigoVerificacion: { x: 420, y: 668, size: 9 },
 
-      // --- SECCIÓN 1: NOMBRE, IDENTIFICACIÓN Y DOMICILIO ---
-      // Usamos Courier-Bold solo aquí
-      razonSocial: { x: 215, y: 492, size: 9, font: 'Courier-Bold' }, 
+      // --- SECCIÓN 1: NOMBRE, IDENTIFICACIÓN ---
+      razonSocial: { 
+        x: 215, 
+        y: 492, // Si está muy alto, baja este número a 490 o 488
+        size: 9, 
+        font: 'Courier-Bold' 
+      },
+      
       nit: { x: 215, y: 480, size: 9 },
-      ciudad: { x: 215, y: 468, size: 9 }, // Domicilio principal (Ciudad)
+      
+      ciudad: { x: 215, y: 468, size: 9 }, // Municipio principal
 
       // --- SECCIÓN 2: MATRÍCULA ---
       matricula: { x: 215, y: 424, size: 9 },
+      
       grupoNiif: { x: 215, y: 400, size: 9 },
       
       // --- SECCIÓN 3: UBICACIÓN COMERCIAL ---
-      // Se repite en Notificación Judicial
+      // (Se imprime en dos lugares: Comercial y Judicial)
       domicilio: [
-        { x: 215, y: 357, size: 9 }, // Comercial
-        { x: 215, y: 265, size: 9 }  // Judicial
+        { x: 215, y: 357, size: 9 }, // Dirección Comercial (Arriba)
+        { x: 215, y: 265, size: 9 }  // Dirección Judicial (Abajo)
       ],
       
       departamento: [
-        { x: 215, y: 345, size: 9 }, // Municipio Comercial (usamos campo departamento para VALLE)
-        { x: 215, y: 253, size: 9 }  // Municipio Judicial
+        { x: 215, y: 345, size: 9 }, // Dept. Comercial
+        { x: 215, y: 253, size: 9 }  // Dept. Judicial
       ],
        
       correo: [
-        { x: 215, y: 333, size: 9 }, // Comercial
-        { x: 215, y: 241, size: 9 }  // Judicial
+        { x: 215, y: 333, size: 9 }, // Email Comercial
+        { x: 215, y: 241, size: 9 }  // Email Judicial
       ],
       
-      // TELÉFONOS (Repetidos 3 veces en comercial, 3 veces en judicial = 6 total)
+      // --- TELÉFONOS (Se repiten 6 veces) ---
       telefono: [
-        // Comercial
+        // Bloque Comercial
         { x: 215, y: 321, size: 9 }, 
         { x: 215, y: 309, size: 9 },
         { x: 215, y: 297, size: 9 },
-        // Judicial
+        // Bloque Judicial
         { x: 215, y: 229, size: 9 },
         { x: 215, y: 217, size: 9 },
         { x: 215, y: 205, size: 9 }
