@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { CCCFormData } from '../types';
 import Button from './Button';
 import Input from './Input';
-import { generateCCCPdf } from '../services/pdfService';
-import { Save, X, RotateCcw, Loader2, Grid3X3, Wand2 } from 'lucide-react';
+import { generateCCCPdf, getAvailableCities, CITY_TEMPLATES } from '../services/pdfService';
+import { Save, X, RotateCcw, Loader2, Grid3X3, Wand2, Building2 } from 'lucide-react';
 
 interface Props {
   onCancel: () => void;
@@ -13,10 +13,9 @@ interface Props {
 const initialData: CCCFormData = {
   razonSocial: 'CALI VOLQUETAS DEL VALLE S.A.S',
   nit: '900658287-6',
-  ciudad: 'CALI',
-  representante: 'RODRIGO CANO',
-  cedulaRep: '19055229',
-  // Usamos una fecha con formato completo incluyendo hora para el PDF
+  ciudad: 'CALI', 
+  representante: '',
+  cedulaRep: '',
   fecha: new Date().toLocaleString('es-CO'), 
   matricula: '882211',
   grupoNiif: 'GRUPO 3',
@@ -33,21 +32,25 @@ const CCCForm: React.FC<Props> = ({ onCancel, onLog }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
 
-  // Generar códigos aleatorios al montar si están vacíos
-  React.useEffect(() => {
+  // Obtener ciudades disponibles
+  const availableCities = getAvailableCities();
+
+  // Obtener la configuración de la ciudad actual para renderizar el formulario
+  const currentCityConfig = useMemo(() => {
+    return CITY_TEMPLATES[formData.ciudad] || CITY_TEMPLATES['CALI'];
+  }, [formData.ciudad]);
+
+  useEffect(() => {
     if (!formData.recibo) generateSecurityCodes();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const generateSecurityCodes = () => {
-    // Generar Recibo (Ej: 8502502)
     const randomRecibo = Math.floor(Math.random() * (9999999 - 1000000) + 1000000).toString();
-    
-    // Generar Código de Verificación (Ej: 0822NXIH99)
     const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     let randomCode = '';
     for (let i = 0; i < 10; i++) {
@@ -68,28 +71,17 @@ const CCCForm: React.FC<Props> = ({ onCancel, onLog }) => {
   };
 
   const handleReset = () => {
-    setFormData({
-        ...initialData,
-        razonSocial: '',
-        nit: '',
-        ciudad: '',
-        representante: '',
-        cedulaRep: '',
-        matricula: '',
-        grupoNiif: '',
-        domicilio: '',
-        departamento: '',
-        correo: '',
-        telefono: ''
-    });
+    // Resetear manteniendo la ciudad
+    const currentCity = formData.ciudad;
+    setFormData({ ...initialData, ciudad: currentCity });
     generateSecurityCodes();
-    onLog('Formulario limpiado (códigos regenerados).');
+    onLog('Formulario limpiado.');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsGenerating(true);
-    onLog(`Generando certificado multipágina para: ${formData.ciudad}...`);
+    onLog(`Generando certificado para: ${formData.ciudad}...`);
     
     try {
       await generateCCCPdf(formData, debugMode);
@@ -106,13 +98,12 @@ const CCCForm: React.FC<Props> = ({ onCancel, onLog }) => {
     <div className="animate-fadeIn">
       <div className="mb-6 flex justify-between items-end">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2">Generador por Imágenes</h2>
+          <h2 className="text-2xl font-bold text-white mb-2">Generador de Cámara de Comercio</h2>
           <p className="text-slate-400 text-sm">
-            Sube tus imágenes JPG a <code className="bg-slate-800 px-1 rounded text-xs text-cyan-400">/public/templates/</code>
+            Plantilla activa: <span className="text-cyan-400 font-bold">{formData.ciudad}</span>
           </p>
         </div>
         
-        {/* Toggle Modo Diseño */}
         <button 
             type="button"
             onClick={() => setDebugMode(!debugMode)}
@@ -129,65 +120,68 @@ const CCCForm: React.FC<Props> = ({ onCancel, onLog }) => {
 
       <form onSubmit={handleSubmit} className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 shadow-2xl backdrop-blur-sm space-y-8">
         
-        {/* Section: Seguridad (Automática) */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between bg-gradient-to-r from-yellow-500/20 to-transparent p-3 rounded-lg border-l-2 border-yellow-500">
-            <h3 className="text-yellow-400 font-bold text-sm uppercase tracking-wider flex items-center gap-2">
-                <Wand2 size={16} />
-                Códigos de Seguridad (Únicos)
-            </h3>
+        {/* Selector de Ciudad (Plantilla) */}
+        <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+            <div className="flex items-center gap-3 mb-3">
+                <Building2 className="text-cyan-400" size={20} />
+                <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">Seleccionar Plantilla de Ciudad</h3>
+            </div>
+            <div className="relative">
+                <select
+                    name="ciudad"
+                    value={formData.ciudad}
+                    onChange={handleChange}
+                    className="w-full bg-slate-950 border border-slate-600 rounded-lg px-4 py-3 text-slate-200 appearance-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all cursor-pointer font-bold"
+                >
+                    {availableCities.map(city => (
+                        <option key={city} value={city}>{city}</option>
+                    ))}
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">
+                    ▼
+                </div>
+            </div>
+            <p className="mt-2 text-xs text-slate-500">
+                El formulario cambiará automáticamente según la ciudad seleccionada.
+            </p>
+        </div>
+
+        {/* Sección de seguridad global (botones) */}
+        <div className="flex justify-end">
             <button 
                 type="button" 
                 onClick={generateSecurityCodes}
-                className="text-xs text-yellow-300 hover:text-white underline"
+                className="text-xs text-yellow-500 hover:text-yellow-300 underline flex items-center gap-1"
             >
-                Regenerar Códigos
+                <Wand2 size={12} /> Regenerar Códigos de Seguridad
             </button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input name="recibo" label="No. Recibo (Auto)" value={formData.recibo} onChange={handleChange} required className="border-yellow-500/30 text-yellow-100 font-mono" />
-            <Input name="codigoVerificacion" label="Cód. Verificación (Auto)" value={formData.codigoVerificacion} onChange={handleChange} required className="border-yellow-500/30 text-yellow-100 font-mono" />
-            <Input name="fecha" label="Fecha y Hora Emisión" value={formData.fecha} onChange={handleChange} required className="border-yellow-500/30 text-yellow-100" />
-          </div>
         </div>
 
-        {/* Section 1 */}
-        <div className="space-y-4">
-          <div className="bg-gradient-to-r from-cyan-500/20 to-transparent p-3 rounded-lg border-l-2 border-cyan-500">
-            <h3 className="text-cyan-400 font-bold text-sm uppercase tracking-wider">1. Datos de Identificación</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input name="razonSocial" label="Razón Social" placeholder="Ej: CALI VOLQUETAS..." value={formData.razonSocial} onChange={handleChange} required />
-            <Input name="nit" label="NIT" placeholder="Ej: 900..." value={formData.nit} onChange={handleChange} required />
-            <Input name="matricula" label="Nro Matrícula" placeholder="Ej: 882211" value={formData.matricula} onChange={handleChange} />
-            <Input name="grupoNiif" label="Grupo NIIF" placeholder="Ej: GRUPO 3" value={formData.grupoNiif} onChange={handleChange} />
-          </div>
-        </div>
-
-        {/* Section 2 */}
-        <div className="space-y-4">
-          <div className="bg-gradient-to-r from-cyan-500/20 to-transparent p-3 rounded-lg border-l-2 border-cyan-500">
-            <h3 className="text-cyan-400 font-bold text-sm uppercase tracking-wider">2. Datos de Ubicación</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input name="ciudad" label="Ciudad" placeholder="Ej: CALI" value={formData.ciudad} onChange={handleChange} />
-            <Input name="departamento" label="Departamento" placeholder="Ej: VALLE" value={formData.departamento} onChange={handleChange} />
-            <Input name="domicilio" label="Dirección Principal" placeholder="Ej: CRA 10 #..." value={formData.domicilio} onChange={handleChange} />
-            <Input name="correo" type="email" label="Correo Electrónico" value={formData.correo} onChange={handleChange} />
-            <Input name="telefono" label="Teléfono" value={formData.telefono} onChange={handleChange} />
-          </div>
-        </div>
-
-         {/* Section 3 */}
-         <div className="space-y-4">
-          <div className="bg-gradient-to-r from-cyan-500/20 to-transparent p-3 rounded-lg border-l-2 border-cyan-500">
-            <h3 className="text-cyan-400 font-bold text-sm uppercase tracking-wider">3. Representación Legal</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input name="representante" label="Representante Legal" placeholder="Nombre Completo" value={formData.representante} onChange={handleChange} required />
-            <Input name="cedulaRep" label="Identificación" placeholder="Cédula" value={formData.cedulaRep} onChange={handleChange} required />
-          </div>
-        </div>
+        {/* Renderizado Dinámico de Secciones */}
+        {currentCityConfig.formStructure.map((section, idx) => (
+            <div key={idx} className="space-y-4 animate-fadeIn" style={{ animationDelay: `${idx * 100}ms` }}>
+                <div className="bg-gradient-to-r from-cyan-500/10 to-transparent p-2 rounded-lg border-l-2 border-cyan-500">
+                    <h3 className="text-cyan-400 font-bold text-sm uppercase tracking-wider">
+                        {idx + 1}. {section.title}
+                    </h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {section.fields.map((field) => (
+                        <Input
+                            key={field.key}
+                            name={field.key}
+                            label={field.label}
+                            value={formData[field.key] || ''}
+                            onChange={handleChange}
+                            type={field.type || 'text'}
+                            required={field.required}
+                            className={field.className}
+                            placeholder={field.placeholder}
+                        />
+                    ))}
+                </div>
+            </div>
+        ))}
 
         {/* Actions */}
         <div className="pt-4 flex flex-col md:flex-row justify-between gap-3 border-t border-slate-800">

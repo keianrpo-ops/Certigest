@@ -1,16 +1,17 @@
 export type ViewState = 'START' | 'CCC_FORM' | 'SANIDAD_FORM';
 export type Country = 'COLOMBIA' | 'PERU' | 'ECUADOR' | null;
 
+// Lista maestra de todos los posibles campos que la app soporta
 export interface CCCFormData {
   razonSocial: string;
   nit: string;
-  ciudad: string;
+  ciudad: string; // Domicilio principal (Municipio)
   representante: string;
   cedulaRep: string;
   fecha: string;
   matricula: string;
   grupoNiif: string;
-  domicilio: string;
+  domicilio: string; // Dirección física
   departamento: string;
   correo: string;
   telefono: string;
@@ -30,23 +31,41 @@ export interface PdfFieldConfig {
   x: number;
   y: number;
   size?: number;
-  font?: 'Helvetica' | 'Helvetica-Bold' | 'Courier'; // Courier es bueno para códigos
-  page?: number; // 0 based index (0 = pagina 1, 1 = pagina 2, etc.)
-  isGlobal?: boolean; // Si true, se imprime en todas las páginas (ej: encabezados)
-  maxWidth?: number; // Para ajustar texto largo si es necesario
+  font?: 'Helvetica' | 'Helvetica-Bold' | 'Courier'; 
+  page?: number; 
+  isGlobal?: boolean; 
+  maxWidth?: number; 
   
-  // PROPIEDADES NUEVAS PARA "BORRAR" LO QUE HAY DEBAJO
-  boxWidth?: number;  // Ancho del parche blanco
-  boxHeight?: number; // Alto del parche blanco
+  // Para borrar lo que hay debajo
+  boxWidth?: number;  
+  boxHeight?: number; 
+}
+
+// DEFINICIÓN DEL FORMULARIO DINÁMICO
+export interface FormFieldDef {
+  key: keyof CCCFormData;
+  label: string;
+  type?: 'text' | 'date' | 'email' | 'number';
+  placeholder?: string;
+  required?: boolean;
+  className?: string; // Para estilos extra (ej: font-mono para códigos)
+}
+
+export interface FormSection {
+  title: string;
+  icon?: string; // Nombre del icono para UI
+  fields: FormFieldDef[];
 }
 
 export interface CityTemplateConfig {
-  // Opción A: Usar un PDF existente como base (MEJOR CALIDAD)
   templatePath?: string;
-  // Opción B: Usar imágenes (LEGADO)
   images?: string[]; 
   
-  fields: {
+  // Configuración VISUAL del Formulario (Qué campos mostrar y cómo agruparlos)
+  formStructure: FormSection[];
+
+  // Configuración TÉCNICA del PDF (Dónde pintar cada campo)
+  pdfMapping: {
     [key in keyof CCCFormData]?: PdfFieldConfig;
   };
 }
