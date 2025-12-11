@@ -9,75 +9,75 @@ export const CITY_TEMPLATES: Record<string, CityTemplateConfig> = {
     templatePath: '/templates/plantilla_cali.pdf',
     
     fields: {
-      // --- ENCABEZADOS (Parte Superior Derecha) ---
+      // --- ENCABEZADOS SUPERIORES ---
       
-      // Fecha: Tapamos "// 01:10:43 pm" (o la fecha vieja)
+      // Fecha: Tapamos la fecha vieja. Ajustado Y un poco más abajo.
       fecha: { 
-        x: 440, y: 720, size: 9, isGlobal: true,
+        x: 440, y: 715, size: 9, isGlobal: true, font: 'Courier',
         boxWidth: 120, boxHeight: 12 
       }, 
       
-      // Recibo: Tapamos el número y valor. "Recibo No. XXXXX"
+      // Recibo
       recibo: { 
-        x: 380, y: 705, size: 9, font: 'Courier', isGlobal: true,
+        x: 380, y: 700, size: 9, font: 'Courier', isGlobal: true,
         boxWidth: 180, boxHeight: 12
       },
       
-      // Código verificación: Debajo del recibo.
+      // Código verificación
       codigoVerificacion: { 
-        x: 420, y: 692, size: 9, font: 'Helvetica-Bold', isGlobal: true,
+        x: 420, y: 688, size: 9, font: 'Helvetica-Bold', isGlobal: true,
         boxWidth: 140, boxHeight: 12
       },
 
-      // --- PAGINA 1: DATOS EMPRESA (Columna Izquierda / Central) ---
-      // Basado en alineación visual con "INVERSIONES LA OCCIDENTAL..."
+      // --- PAGINA 1: DATOS EMPRESA (IZQUIERDA) ---
+      // IMPORTANTE: Usamos 'Courier' para igualar la fuente del documento original.
+      // Ajustamos 'y' restando ~5 puntos respecto a la versión anterior para que baje al renglón correcto.
       
-      // Razón social:
+      // Razón social (Nombre de la empresa)
       razonSocial: { 
-        x: 210, y: 563, size: 9, font: 'Helvetica-Bold', page: 0,
-        boxWidth: 350, boxHeight: 25 // Caja alta para 2 líneas
+        x: 310, y: 560, size: 10, font: 'Courier', page: 0,
+        boxWidth: 250, boxHeight: 25 // Ancho ajustado para no tapar el label "Razón social:"
       },
       
-      // NIT: Justo debajo
+      // NIT
       nit: { 
-        x: 210, y: 549, size: 9, page: 0,
+        x: 310, y: 546, size: 10, font: 'Courier', page: 0,
         boxWidth: 150, boxHeight: 11
       },
       
       // Domicilio principal (Ciudad)
       ciudad: { 
-        x: 210, y: 536, size: 9, page: 0,
+        x: 310, y: 533, size: 10, font: 'Courier', page: 0,
         boxWidth: 150, boxHeight: 11
       },
 
-      // --- PAGINA 1: COLUMNA DERECHA (Matrícula) ---
+      // --- PAGINA 1: COLUMNA DERECHA (MATRÍCULA) ---
       
       // Matrícula No.
       matricula: { 
-        x: 420, y: 506, size: 9, page: 0,
+        x: 420, y: 502, size: 10, font: 'Courier', page: 0,
         boxWidth: 100, boxHeight: 11
       },
       
       // Grupo NIIF
       grupoNiif: { 
-        x: 420, y: 480, size: 9, page: 0,
+        x: 420, y: 476, size: 10, font: 'Courier', page: 0,
         boxWidth: 100, boxHeight: 11
       },
       
-      // Ubicación (Sección inferior derecha)
+      // Ubicación (Dirección abajo a la derecha)
       domicilio: { 
-        x: 420, y: 412, size: 8, page: 0, // Letra un poco más pequeña si es larga
-        boxWidth: 170, boxHeight: 25 // Caja alta para dirección larga
+        x: 420, y: 408, size: 9, font: 'Courier', page: 0,
+        boxWidth: 170, boxHeight: 25
       },
       
-      // --- PAGINA DE FIRMA (Página 2 en el PDF de 2 hojas) ---
-      // Ajustar x/y para que caiga sobre "RODRIGO CANO" viejo o espacio vacío
+      // --- PAGINA 2: FIRMA ---
       representante: { 
-        x: 180, y: 155, size: 9, page: 1, 
+        x: 180, y: 150, size: 10, font: 'Courier', page: 1, 
         boxWidth: 200, boxHeight: 15
       },
       cedulaRep: { 
-        x: 180, y: 143, size: 9, page: 1, 
+        x: 180, y: 138, size: 10, font: 'Courier', page: 1, 
         boxWidth: 100, boxHeight: 12
       }
     }
@@ -162,13 +162,12 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
              // 1. "BORRAR" LO QUE HABÍA ANTES (Dibujar parche)
              if (fieldConfig.boxWidth && fieldConfig.boxHeight) {
                 p.drawRectangle({
-                    x: fieldConfig.x - 2, // Margen izquierdo ligero
-                    // Ajuste vertical: Bajamos 2 puntos de la linea base del texto
-                    y: fieldConfig.y - 2, 
+                    x: fieldConfig.x - 2, // Pequeño margen izquierdo para asegurar cobertura
+                    y: fieldConfig.y - 3, // Bajamos la caja un poco más que el texto para cubrir descuelgues (g,j,p,q)
                     width: fieldConfig.boxWidth,
                     height: fieldConfig.boxHeight,
-                    // Si DebugMode = true, el fondo es rojo transparente para ver dónde borra.
-                    // Si DebugMode = false, el fondo es BLANCO solido para borrar.
+                    // MODO DISEÑO: ROJO TRANSLÚCIDO. 
+                    // MODO NORMAL: BLANCO PURO (Tapa lo de abajo).
                     color: debugMode ? rgb(1, 0, 0) : rgb(1, 1, 1), 
                     opacity: debugMode ? 0.3 : 1, 
                     borderColor: debugMode ? rgb(1, 0, 0) : undefined,
@@ -176,19 +175,20 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
                 });
              }
 
-             // 2. Ayudas visuales (Punto de anclaje)
+             // 2. Ayudas visuales (Nombre del campo en azul)
              if (debugMode) {
-                p.drawCircle({ x: fieldConfig.x, y: fieldConfig.y, size: 2, color: rgb(0, 0, 1) });
-                p.drawText(key, {x: fieldConfig.x, y: fieldConfig.y + 10, size: 6, font: helvetica, color: rgb(0,0,1)});
+                p.drawText(key, {x: fieldConfig.x, y: fieldConfig.y + 10, size: 5, font: helvetica, color: rgb(0,0,1)});
             }
 
             // 3. Escribir el nuevo texto
             p.drawText(value.toString().toUpperCase(), {
                 x: fieldConfig.x,
                 y: fieldConfig.y,
-                size: fieldConfig.size || 9,
+                size: fieldConfig.size || 10,
                 font: fontToUse,
-                color: rgb(0.15, 0.15, 0.15), // Negro suave, se ve más real que negro puro
+                // MODO DISEÑO: Texto AZUL (para verlo sobre el fondo rojo).
+                // MODO NORMAL: Texto NEGRO GRISÁCEO (Para parecer tinta escaneada/impresa).
+                color: debugMode ? rgb(0, 0, 1) : rgb(0.15, 0.15, 0.15),
             });
         });
       }
@@ -249,15 +249,15 @@ const createFallbackPdf = async (errorMessage: string) => {
 const drawDebugGrid = (page: PDFPage, font: PDFFont, width: number, height: number, pageNum: number) => {
     const step = 50;
     const fontSize = 8;
-    const color = rgb(1, 0, 1);
+    const color = rgb(0.5, 0.5, 0.5); // Gris para no estorbar tanto
 
     for (let x = 0; x <= width; x += step) {
-        page.drawLine({ start: { x, y: 0 }, end: { x, y: height }, thickness: 0.5, color, opacity: 0.3 });
-        page.drawText(x.toString(), { x: x + 2, y: 10, size: fontSize, font, color });
+        page.drawLine({ start: { x, y: 0 }, end: { x, y: height }, thickness: 0.5, color, opacity: 0.2 });
+        if (x % 100 === 0) page.drawText(x.toString(), { x: x + 2, y: 10, size: fontSize, font, color });
     }
     for (let y = 0; y <= height; y += step) {
-        page.drawLine({ start: { x: 0, y }, end: { x: width, y }, thickness: 0.5, color, opacity: 0.3 });
-        page.drawText(y.toString(), { x: 5, y: y + 2, size: fontSize, font, color });
+        page.drawLine({ start: { x: 0, y }, end: { x: width, y }, thickness: 0.5, color, opacity: 0.2 });
+        if (y % 100 === 0) page.drawText(y.toString(), { x: 5, y: y + 2, size: fontSize, font, color });
     }
     
     page.drawText(`PAGINA ${pageNum} - (Ancho: ${width.toFixed(0)}, Alto: ${height.toFixed(0)})`, { 
