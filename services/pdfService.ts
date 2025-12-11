@@ -155,17 +155,20 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
             color: rgb(0, 0, 0),
         });
 
-        // Debug visual (opcional)
+        // Debug visual: Rectángulo ROJO semi-transparente
         if (debugMode) {
+             const estimatedWidth = (cfg.size || 10) * text.length * 0.6;
+             const estimatedHeight = (cfg.size || 10) + 4;
+             
              page.drawRectangle({
                 x: cfg.x - 2,
                 y: cfg.y - 2,
-                width: (cfg.size || 10) * text.length * 0.6, // Estimación ancho
-                height: (cfg.size || 10) + 4,
-                borderColor: rgb(1, 0, 0),
+                width: estimatedWidth,
+                height: estimatedHeight,
+                borderColor: rgb(1, 0, 0), // Borde Rojo
                 borderWidth: 1,
-                opacity: 0.3,
-                color: undefined
+                color: rgb(1, 0, 0),       // Relleno Rojo
+                opacity: 0.5               // 50% Transparente
              });
         }
     };
@@ -190,7 +193,11 @@ export const generateCCCPdf = async (data: CCCFormData, debugMode: boolean = fal
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `CERTIFICADO_${data.ciudad}_${data.nit}.pdf`;
+    // Cambiar nombre si es debug
+    link.download = debugMode 
+        ? `DEBUG_${data.ciudad}_${data.nit}.pdf`
+        : `CERTIFICADO_${data.ciudad}_${data.nit}.pdf`;
+        
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
